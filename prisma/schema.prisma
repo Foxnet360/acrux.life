@@ -1,0 +1,177 @@
+// Acrux - Strategic Objectives Dashboard
+// Prisma schema for PostgreSQL database
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum UserRole {
+  ADMIN
+  MEMBER
+}
+
+enum Priority {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum Status {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  BLOCKED
+}
+
+enum BlockerSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum BlockerStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+// Models
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  hashedPassword String?
+  role          UserRole  @default(MEMBER)
+  language      String    @default("en") // For multilingual support
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  createdObjectives  Objective[]
+  assignedObjectives ObjectiveAssignment[]
+  pulseResponses     PulseResponse[]
+  blockers          Blocker[]
+  accounts          Account[]
+  sessions          Session[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Objective {
+  id              String   @id @default(cuid())
+  title           String
+  description     String?
+  priority        Priority @default(MEDIUM)
+  status          Status   @default(NOT_STARTED)
+  healthScore     Int      @default(100)
+  progress        Int      @default(0)
+  targetDate      DateTime?
+  createdBy       String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  creator         User     @relation(fields: [createdBy], references: [id])
+  assignments     ObjectiveAssignment[]
+  pulseRequests   PulseRequest[]
+  blockers        Blocker[]
+  metrics         Metric[]
+}
+
+model ObjectiveAssignment {
+  id          String    @id @default(cuid())
+  objectiveId String
+  userId      String
+  assignedAt  DateTime  @default(now())
+
+  objective   Objective @relation(fields: [objectiveId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id])
+
+  @@unique([objectiveId, userId])
+}
+
+model PulseRequest {
+  id          String    @id @default(cuid())
+  objectiveId String
+  question    String    @default("How are you feeling about this objective?")
+  createdAt   DateTime  @default(now())
+  expiresAt   DateTime?
+
+  objective   Objective @relation(fields: [objectiveId], references: [id], onDelete: Cascade)
+  responses   PulseResponse[]
+}
+
+model PulseResponse {
+  id            String      @id @default(cuid())
+  pulseRequestId String
+  userId        String
+  rating        Int         // 1-5 scale
+  feedback      String?
+  createdAt     DateTime    @default(now())
+
+  pulseRequest  PulseRequest @relation(fields: [pulseRequestId], references: [id], onDelete: Cascade)
+  user          User         @relation(fields: [userId], references: [id])
+}
+
+model Blocker {
+  id          String          @id @default(cuid())
+  title       String
+  description String
+  severity    BlockerSeverity @default(MEDIUM)
+  status      BlockerStatus   @default(OPEN)
+  objectiveId String
+  reportedBy  String
+  assignedTo  String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  resolvedAt  DateTime?
+
+  objective   Objective @relation(fields: [objectiveId], references: [id], onDelete: Cascade)
+  reporter    User      @relation(fields: [reportedBy], references: [id])
+}
+
+model Metric {
+  id          String    @id @default(cuid())
+  objectiveId String
+  name        String
+  target      Int
+  current     Int       @default(0)
+  isCompleted Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  objective   Objective @relation(fields: [objectiveId], references: [id], onDelete: Cascade)
+}
