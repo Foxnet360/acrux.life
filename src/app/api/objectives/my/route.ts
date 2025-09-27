@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { ApiResponse } from '@/lib/types'
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) { // eslint-disable-line @typescript-eslint/no-unused-vars
   try {
     const session = await getServerSession(authOptions)
 

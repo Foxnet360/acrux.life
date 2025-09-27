@@ -120,7 +120,7 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status')
     const objectiveId = searchParams.get('objectiveId')
 
-    let where: any = {}
+    const where: Record<string, unknown> = {}
 
     if (status) {
       where.status = status

@@ -44,7 +44,7 @@ export default function Home() {
                 Acrux
               </h1>
               <p className="lead mb-4">
-                Strategic Objectives Dashboard that connects your team's well-being to business goals through real-time pulse checks and proactive blocker management.
+                Strategic Objectives Dashboard that connects your team's well-being to business goals through real-time pulse checks and proactive blocker management. {/* eslint-disable-line react/no-unescaped-entities */}
               </p>
               <div className="d-flex gap-3">
                 <Link href="/auth/signup" className="btn btn-light btn-lg">

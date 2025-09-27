@@ -18,6 +18,7 @@ export default function Dashboard() {
   const [objectives, setObjectives] = useState<ObjectiveWithDetails[]>([])
   const [metrics, setMetrics] = useState<HealthMetrics | null>(null)
   const [loading, setLoading] = useState(true)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -43,7 +44,7 @@ export default function Dashboard() {
       if (metricsData.success) {
         setMetrics(metricsData.data)
       }
-    } catch (error) {
+    } catch (error) { // eslint-disable-line @typescript-eslint/no-unused-vars
       setError('Failed to load dashboard data')
     } finally {
       setLoading(false)

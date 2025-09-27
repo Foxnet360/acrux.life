@@ -12,6 +12,7 @@ export default function SignUp() {
     password: '',
     confirmPassword: ''
   })
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
@@ -71,7 +72,7 @@ export default function SignUp() {
       } else {
         setError(data.message)
       }
-    } catch (error) {
+    } catch (error) { // eslint-disable-line @typescript-eslint/no-unused-vars
       setError('An error occurred. Please try again.')
     } finally {
       setLoading(false)

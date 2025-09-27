@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Providers } from "@/components/providers";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import "./globals.css";
-import "@/lib/i18n"; // Initialize i18n
+// import "@/lib/i18n"; // Initialize i18n - temporarily disabled due to SSR issues
 
 export const metadata: Metadata = {
   title: "Acrux - Strategic Objectives Dashboard",

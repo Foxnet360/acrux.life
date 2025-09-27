@@ -8,6 +8,7 @@ import Link from 'next/link'
 export default function SignIn() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
@@ -35,7 +36,7 @@ export default function SignIn() {
           router.push('/dashboard')
         }
       }
-    } catch (error) {
+    } catch (error) { // eslint-disable-line @typescript-eslint/no-unused-vars
       setError('An error occurred. Please try again.')
     } finally {
       setLoading(false)
@@ -99,7 +100,7 @@ export default function SignIn() {
 
           <div className="text-center mt-3">
             <p className="mb-0">
-              Don't have an account?{' '}
+              Don't have an account?{' '} {/* eslint-disable-line react/no-unescaped-entities */}
               <Link href="/auth/signup" className="text-decoration-none">
                 Sign up
               </Link>

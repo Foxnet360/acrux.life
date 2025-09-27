@@ -81,7 +81,7 @@ export type BlockerSeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
 export type BlockerStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED'
 
 // API Response Types
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean
   data: T
   message: string

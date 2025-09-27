@@ -1,4 +1,4 @@
-import { Objective, User, ObjectiveCardProps } from '@/lib/types'
+import { ObjectiveCardProps } from '@/lib/types'
 import UserAvatar from './UserAvatar'
 
 export default function ObjectiveCard({

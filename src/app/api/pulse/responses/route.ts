@@ -84,27 +84,31 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user already responded
-    const existingResponse = await prisma.pulseResponse.findUnique({
+    const existingResponse = await prisma.pulseResponse.findFirst({
       where: {
-        pulseRequestId_userId: {
-          pulseRequestId,
-          userId: session.user.id
-        }
+        pulseRequestId,
+        userId: session.user.id
       }
     })
 
     if (existingResponse) {
       // Update existing response
-      const response = await prisma.pulseResponse.update({
+      await prisma.pulseResponse.updateMany({
         where: {
-          pulseRequestId_userId: {
-            pulseRequestId,
-            userId: session.user.id
-          }
+          pulseRequestId,
+          userId: session.user.id
         },
         data: {
           rating,
           feedback
+        }
+      })
+
+      // Get the updated response
+      const updatedResponse = await prisma.pulseResponse.findFirst({
+        where: {
+          pulseRequestId,
+          userId: session.user.id
         },
         include: {
           user: true,
@@ -119,7 +123,7 @@ export async function POST(request: NextRequest) {
         {
           success: true,
           message: 'Pulse response updated successfully',
-          data: response
+          data: updatedResponse
         } as ApiResponse,
         { status: 200 }
       )

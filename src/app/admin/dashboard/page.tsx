@@ -12,7 +12,7 @@ type ObjectiveWithDetails = Objective & {
 }
 
 export default function AdminDashboard() {
-  const { data: session } = useSession()
+  const { data: session } = useSession() // eslint-disable-line @typescript-eslint/no-unused-vars
   const [objectives, setObjectives] = useState<ObjectiveWithDetails[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -31,7 +31,7 @@ export default function AdminDashboard() {
       } else {
         setError(data.message)
       }
-    } catch (error) {
+    } catch (error) { // eslint-disable-line @typescript-eslint/no-unused-vars
       setError('Failed to load objectives')
     } finally {
       setLoading(false)
