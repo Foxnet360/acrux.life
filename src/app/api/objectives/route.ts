@@ -1,153 +1,159 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { ApiResponse } from '@/lib/types'
+import { requireAdmin } from '@/lib/auth-utils'
+import { handleApiError, createSuccessResponse } from '@/lib/errors'
+import { createObjectiveSchema, objectiveQuerySchema } from '@/lib/validations/objective'
 
-export async function GET(_request: NextRequest) { // eslint-disable-line @typescript-eslint/no-unused-vars
+export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    // Require admin access
+    await requireAdmin()
 
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Unauthorized',
-          data: null
-        } as ApiResponse,
-        { status: 401 }
-      )
-    }
+    // Parse and validate query parameters
+    const { searchParams } = new URL(request.url)
+    const queryParams = Object.fromEntries(searchParams.entries())
+    const query = objectiveQuerySchema.parse(queryParams)
 
-    // Only admins can see all objectives
-    if (session.user.role !== 'ADMIN') {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Forbidden',
-          data: null
-        } as ApiResponse,
-        { status: 403 }
-      )
-    }
-
-    const objectives = await prisma.objective.findMany({
-      include: {
-        creator: true,
-        assignments: {
-          include: {
-            user: true
-          }
-        }
-      },
-      orderBy: {
-        updatedAt: 'desc'
+    // Build where clause
+    const where: any = {}
+    if (query.status) where.status = query.status
+    if (query.priority) where.priority = query.priority
+    if (query.search) {
+      where.title = {
+        contains: query.search,
+        mode: 'insensitive'
       }
-    })
+    }
 
-    return NextResponse.json(
-      {
-        success: true,
-        message: 'Objectives retrieved successfully',
-        data: objectives
-      } as ApiResponse,
-      { status: 200 }
-    )
+    // Calculate pagination
+    const skip = (query.page - 1) * query.pageSize
+    const take = query.pageSize
+
+    // Fetch objectives with optimized queries
+    const [objectives, totalCount] = await Promise.all([
+      prisma.objective.findMany({
+        where,
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              firstName: true,
+              lastName: true
+            }
+          },
+          owner: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              firstName: true,
+              lastName: true
+            }
+          },
+          assignments: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                  firstName: true,
+                  lastName: true
+                }
+              }
+            }
+          },
+          _count: {
+            select: {
+              pulseChecks: true,
+              blockers: true
+            }
+          }
+        },
+        orderBy: {
+          updatedAt: 'desc'
+        },
+        skip,
+        take
+      }),
+      prisma.objective.count({ where })
+    ])
+
+    // Calculate pagination metadata
+    const totalPages = Math.ceil(totalCount / query.pageSize)
+
+    return createSuccessResponse({
+      objectives,
+      pagination: {
+        page: query.page,
+        pageSize: query.pageSize,
+        total: totalCount,
+        totalPages
+      }
+    }, 'Objectives retrieved successfully')
   } catch (error) {
-    console.error('Get objectives error:', error)
-    return NextResponse.json(
-      {
-        success: false,
-        message: 'Internal server error',
-        data: null
-      } as ApiResponse,
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    // Require admin access
+    const user = await requireAdmin()
 
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Unauthorized',
-          data: null
-        } as ApiResponse,
-        { status: 401 }
-      )
-    }
+    // Parse and validate request body
+    const body = await request.json()
+    const validatedData = createObjectiveSchema.parse(body)
 
-    // Only admins can create objectives
-    if (session.user.role !== 'ADMIN') {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Forbidden',
-          data: null
-        } as ApiResponse,
-        { status: 403 }
-      )
-    }
-
-    const { title, description, priority, targetDate, assignedUsers } = await request.json()
-
-    // Validation
-    if (!title) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Title is required',
-          data: null
-        } as ApiResponse,
-        { status: 400 }
-      )
-    }
-
-    // Create objective
-    const objective = await prisma.objective.create({
-      data: {
-        title,
-        description,
-        priority: priority || 'MEDIUM',
-        targetDate: targetDate ? new Date(targetDate) : null,
-        createdBy: session.user.id,
-        assignments: {
-          create: assignedUsers?.map((userId: string) => ({
-            userId
-          })) || []
-        }
-      },
-      include: {
-        creator: true,
-        assignments: {
-          include: {
-            user: true
+    // Create objective with assignments in a transaction
+    const objective = await prisma.$transaction(async (tx) => {
+      const createdObjective = await tx.objective.create({
+        data: {
+          title: validatedData.title,
+          description: validatedData.description,
+          priority: validatedData.priority,
+          targetDate: validatedData.targetDate ? new Date(validatedData.targetDate) : null,
+          userId: user.id,
+          assignments: {
+            create: validatedData.assignedUsers.map((userId) => ({
+              userId,
+              assignedBy: user.id
+            }))
+          }
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              firstName: true,
+              lastName: true
+            }
+          },
+          assignments: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                  firstName: true,
+                  lastName: true
+                }
+              }
+            }
           }
         }
-      }
+      })
+
+      return createdObjective
     })
 
-    return NextResponse.json(
-      {
-        success: true,
-        message: 'Objective created successfully',
-        data: objective
-      } as ApiResponse,
-      { status: 201 }
-    )
+    return createSuccessResponse(objective, 'Objective created successfully', 201)
   } catch (error) {
-    console.error('Create objective error:', error)
-    return NextResponse.json(
-      {
-        success: false,
-        message: 'Internal server error',
-        data: null
-      } as ApiResponse,
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 }

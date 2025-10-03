@@ -1,0 +1,6 @@
+import { redirect } from 'next/navigation'
+
+export default function TeamManagementPage() {
+  // Redirect to dashboard for now - will implement later
+  redirect('/dashboard')
+}

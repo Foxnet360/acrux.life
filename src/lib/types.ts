@@ -1,11 +1,16 @@
 // Database Types (generated from Prisma)
 export type User = {
   id: string
-  email: string
+  email: string | null
   name: string | null
-  hashedPassword: string | null
+  passwordHash: string
+  firstName: string | null
+  lastName: string | null
   role: UserRole
-  language: string
+  organizationId: string | null
+  isActive: boolean
+  emailVerified: Date | null
+  image: string | null
   createdAt: Date
   updatedAt: Date
 }
@@ -14,37 +19,47 @@ export type Objective = {
   id: string
   title: string
   description: string | null
-  priority: Priority
-  status: Status
-  healthScore: number
   progress: number
+  healthScore: number
+  status: Status
   targetDate: Date | null
-  createdBy: string
+  ownerId: string | null
+  userId: string
   createdAt: Date
   updatedAt: Date
 }
 
 export type ObjectiveAssignment = {
   id: string
-  objectiveId: string
-  userId: string
+  role: string
   assignedAt: Date
+  isActive: boolean
+  userId: string
+  objectiveId: string
+  assignedBy: string
 }
 
 export type PulseRequest = {
   id: string
-  objectiveId: string
-  question: string
+  title: string
+  message: string | null
+  dueDate: Date | null
+  status: PulseRequestStatus
+  adminId: string
+  memberId: string
+  objectiveId: string | null
   createdAt: Date
-  expiresAt: Date | null
+  completedAt: Date | null
 }
 
 export type PulseResponse = {
   id: string
-  pulseRequestId: string
-  userId: string
-  rating: number
+  sentiment: number
+  confidence: number
   feedback: string | null
+  isAnonymous: boolean
+  userId: string
+  objectiveId: string
   createdAt: Date
 }
 
@@ -54,31 +69,133 @@ export type Blocker = {
   description: string
   severity: BlockerSeverity
   status: BlockerStatus
+  isAnonymous: boolean
   objectiveId: string
-  reportedBy: string
-  assignedTo: string | null
   createdAt: Date
   updatedAt: Date
-  resolvedAt: Date | null
 }
 
 export type Metric = {
   id: string
-  objectiveId: string
   name: string
-  target: number
-  current: number
-  isCompleted: boolean
+  description: string | null
+  currentValue: number
+  targetValue: number
+  unit: string
+  objectiveId: string
   createdAt: Date
   updatedAt: Date
 }
 
+export type PulseCheck = {
+  id: string
+  sentiment: number
+  confidence: number
+  feedback: string | null
+  isAnonymous: boolean
+  userId: string
+  objectiveId: string
+  createdAt: Date
+}
+
+export type TeamMember = {
+  id: string
+  role: string
+  joinedAt: Date
+  isActive: boolean
+  userId: string
+  adminId: string
+}
+
+export type TeamInvitation = {
+  id: string
+  email: string
+  role: string
+  status: InvitationStatus
+  token: string
+  expiresAt: Date
+  adminId: string
+  acceptedBy: string | null
+  createdAt: Date
+  acceptedAt: Date | null
+}
+
+export type Activity = {
+  id: string
+  action: string
+  metadata: any
+  userId: string
+  projectId: string | null
+  createdAt: Date
+}
+
+export type Project = {
+  id: string
+  name: string
+  description: string | null
+  ownerId: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+export type ProjectMember = {
+  id: string
+  projectId: string
+  userId: string
+  role: ProjectRole
+  joinedAt: Date
+}
+
+export type Dataset = {
+  id: string
+  name: string
+  description: string | null
+  projectId: string
+  fileKey: string
+  fileSize: number
+  fileType: string
+  uploadedBy: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+export type Tag = {
+  id: string
+  name: string
+  color: string | null
+  createdAt: Date
+}
+
+export type DatasetTag = {
+  id: string
+  datasetId: string
+  tagId: string
+}
+
+export type Comment = {
+  id: string
+  content: string
+  datasetId: string
+  userId: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+export type VerificationToken = {
+  identifier: string
+  token: string
+  expires: Date
+}
+
 // Enums
-export type UserRole = 'ADMIN' | 'MEMBER'
+export type UserRole = 'ADMIN' | 'RESEARCHER' | 'ANALYST' | 'VIEWER'
 export type Priority = 'HIGH' | 'MEDIUM' | 'LOW'
-export type Status = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'BLOCKED'
+export type Status = 'ACTIVE' | 'COMPLETED' | 'PAUSED'
 export type BlockerSeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
-export type BlockerStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED'
+export type BlockerStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED'
+export type ProjectRole = 'OWNER' | 'ADMIN' | 'EDITOR' | 'VIEWER'
+export type PulseRequestStatus = 'PENDING' | 'COMPLETED' | 'EXPIRED'
+export type InvitationStatus = 'PENDING' | 'ACCEPTED' | 'EXPIRED' | 'CANCELLED'
 
 // API Response Types
 export interface ApiResponse<T = unknown> {
