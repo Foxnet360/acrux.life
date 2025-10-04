@@ -26,22 +26,26 @@ export default function SignUp() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    console.log('Form submitted with data:', formData)
     setLoading(true)
     setError('')
 
     if (formData.password !== formData.confirmPassword) {
+      console.log('Passwords do not match')
       setError('Passwords do not match')
       setLoading(false)
       return
     }
 
     if (formData.password.length < 8) {
+      console.log('Password too short')
       setError('Password must be at least 8 characters long')
       setLoading(false)
       return
     }
 
     try {
+      console.log('Sending request to /api/auth/signup')
       const response = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: {
@@ -54,25 +58,20 @@ export default function SignUp() {
         }),
       })
 
+      console.log('Response status:', response.status)
       const data = await response.json()
+      console.log('Response data:', data)
 
       if (data.success) {
-        // Auto sign in after successful registration
-        const result = await signIn('credentials', {
-          email: formData.email,
-          password: formData.password,
-          redirect: false,
-        })
-
-        if (result?.ok) {
-          router.push('/dashboard')
-        } else {
-          router.push('/auth/signin')
-        }
+        console.log('Signup successful')
+        // Redirect to sign in page for manual login
+        router.push('/auth/signin?message=Account created successfully. Please sign in.')
       } else {
+        console.log('Signup failed:', data.message)
         setError(data.message)
       }
     } catch (error) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      console.log('Fetch error:', error)
       setError('An error occurred. Please try again.')
     } finally {
       setLoading(false)

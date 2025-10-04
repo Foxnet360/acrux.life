@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { signIn, getSession } from 'next-auth/react'
+import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -28,13 +28,8 @@ export default function SignIn() {
       if (result?.error) {
         setError('Invalid email or password')
       } else {
-        // Check session to get user role
-        const session = await getSession()
-        if (session?.user?.role === 'ADMIN') {
-          router.push('/admin/dashboard')
-        } else {
-          router.push('/dashboard')
-        }
+        // Redirect to dashboard (default for RESEARCHER role)
+        router.push('/dashboard')
       }
     } catch (error) { // eslint-disable-line @typescript-eslint/no-unused-vars
       setError('An error occurred. Please try again.')

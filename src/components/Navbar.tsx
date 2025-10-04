@@ -58,8 +58,8 @@ export default function Navbar() {
             </li>
             <li className="nav-item">
               <Link
-                className={`nav-link ${isActive('/objectives') ? 'active' : ''}`}
-                href="/objectives"
+                className={`nav-link ${isActive('/dashboard/objectives') ? 'active' : ''}`}
+                href="/dashboard/objectives"
               >
                 {t('nav.objectives')}
               </Link>
@@ -130,7 +130,7 @@ export default function Navbar() {
               </a>
               <ul className="dropdown-menu" aria-labelledby="navbarDropdown">
                 <li>
-                  <Link className="dropdown-item" href="/profile">
+                  <Link className="dropdown-item" href="/dashboard">
                     {t('nav.profile')}
                   </Link>
                 </li>

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Providers } from "@/components/providers";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import "./globals.css";
-// import "@/lib/i18n"; // Initialize i18n - temporarily disabled due to SSR issues
+import ClientProviders from "@/components/ClientProviders";
 
 export const metadata: Metadata = {
   title: "Acrux - Strategic Objectives Dashboard",
@@ -18,9 +18,11 @@ export default function RootLayout({
     <html lang="en">
       <body className="antialiased">
         <ErrorBoundary>
-          <Providers>
-            {children}
-          </Providers>
+          <ClientProviders>
+            <Providers>
+              {children}
+            </Providers>
+          </ClientProviders>
         </ErrorBoundary>
       </body>
     </html>

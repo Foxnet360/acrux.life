@@ -42,7 +42,7 @@ export async function GET(_request: NextRequest) { // eslint-disable-line @types
 
       totalObjectives = objectives.length
       completedObjectives = objectives.filter(obj => obj.status === 'COMPLETED').length
-      blockedObjectives = objectives.filter(obj => obj.status === 'BLOCKED').length
+      blockedObjectives = objectives.filter(obj => obj.status === 'PAUSED').length
 
       if (objectives.length > 0) {
         const totalHealthScore = objectives.reduce((sum, obj) => sum + obj.healthScore, 0)
@@ -72,7 +72,7 @@ export async function GET(_request: NextRequest) { // eslint-disable-line @types
 
       totalObjectives = objectives.length
       completedObjectives = objectives.filter(obj => obj.status === 'COMPLETED').length
-      blockedObjectives = objectives.filter(obj => obj.status === 'BLOCKED').length
+      blockedObjectives = objectives.filter(obj => obj.status === 'PAUSED').length
 
       if (objectives.length > 0) {
         const totalHealthScore = objectives.reduce((sum, obj) => sum + obj.healthScore, 0)
@@ -92,7 +92,7 @@ export async function GET(_request: NextRequest) { // eslint-disable-line @types
             }
           }
         },
-        expiresAt: {
+        dueDate: {
           gt: new Date()
         }
       }

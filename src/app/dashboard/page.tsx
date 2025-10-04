@@ -9,7 +9,7 @@ import { Objective, User, ObjectiveAssignment, HealthMetrics } from '@/lib/types
 
 type ObjectiveWithDetails = Objective & {
   assignments: (ObjectiveAssignment & { user: User })[]
-  creator: User
+  user: User
 }
 
 export default function Dashboard() {

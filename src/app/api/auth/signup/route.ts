@@ -4,11 +4,14 @@ import { prisma } from '@/lib/prisma'
 import { ApiResponse } from '@/lib/types'
 
 export async function POST(request: NextRequest) {
+  console.log('Signup API called')
   try {
     const { email, password, name } = await request.json()
+    console.log('Received data:', { email, name, passwordLength: password?.length })
 
     // Validation
     if (!email || !password) {
+      console.log('Validation failed: missing email or password')
       return NextResponse.json(
         {
           success: false,
@@ -20,6 +23,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (password.length < 8) {
+      console.log('Validation failed: password too short')
       return NextResponse.json(
         {
           success: false,
@@ -30,12 +34,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    console.log('Checking if user exists')
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
       where: { email }
     })
 
     if (existingUser) {
+      console.log('User already exists')
       return NextResponse.json(
         {
           success: false,
@@ -46,23 +52,27 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    console.log('Hashing password')
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12)
 
+    console.log('Creating user')
     // Create user
     const user = await prisma.user.create({
       data: {
         email,
         name: name || null,
-        hashedPassword,
-        role: 'MEMBER' // Default role
+        passwordHash: hashedPassword,
+        role: 'RESEARCHER' // Default role
       }
     })
 
+    console.log('User created:', user.id)
     // Return user without password
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { hashedPassword: _, ...userWithoutPassword } = user
+    const { passwordHash: _, ...userWithoutPassword } = user
 
+    console.log('Returning success')
     return NextResponse.json(
       {
         success: true,

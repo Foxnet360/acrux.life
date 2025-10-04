@@ -6,9 +6,12 @@ import { ApiResponse } from '@/lib/types'
 
 export async function GET(_request: NextRequest) { // eslint-disable-line @typescript-eslint/no-unused-vars
   try {
+    console.log('Getting session')
     const session = await getServerSession(authOptions)
+    console.log('Session:', session)
 
     if (!session?.user?.id) {
+      console.log('No session user id')
       return NextResponse.json(
         {
           success: false,
@@ -28,7 +31,7 @@ export async function GET(_request: NextRequest) { // eslint-disable-line @types
         }
       },
       include: {
-        creator: true,
+        user: true,
         assignments: {
           include: {
             user: true

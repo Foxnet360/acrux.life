@@ -59,7 +59,7 @@ export default function Home() {
       </nav>
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-primary to-primary-dark text-white py-5 mt-5">
+      <section className="bg-dark text-light py-5 mt-5">
         <div className="container">
           <div className="row align-items-center">
             <div className="col-lg-6">
@@ -223,7 +223,7 @@ export default function Home() {
                   </div>
                   <p className="card-text">"Acrux helped us identify blockers before they derailed our quarterly objectives. The pulse checks gave us early warning signals we never had before."</p>
                   <div className="d-flex align-items-center">
-                    <div className="bg-primary rounded-circle d-flex align-items-center justify-content-center text-white fw-bold me-3" style={{ width: '40px', height: '40px' }}>
+                    <div className="bg-dark rounded-circle d-flex align-items-center justify-content-center text-light fw-bold me-3" style={{ width: '40px', height: '40px' }}>
                       S
                     </div>
                     <div>
@@ -243,7 +243,7 @@ export default function Home() {
                   </div>
                   <p className="card-text">"The health scoring feature is a game-changer. We can now predict objective success and reallocate resources proactively."</p>
                   <div className="d-flex align-items-center">
-                    <div className="bg-success rounded-circle d-flex align-items-center justify-content-center text-white fw-bold me-3" style={{ width: '40px', height: '40px' }}>
+                    <div className="bg-success rounded-circle d-flex align-items-center justify-content-center text-light fw-bold me-3" style={{ width: '40px', height: '40px' }}>
                       M
                     </div>
                     <div>
@@ -263,7 +263,7 @@ export default function Home() {
                   </div>
                   <p className="card-text">"Blocker management used to be chaotic. Acrux brought structure and accountability, improving our team's velocity by 30%."</p>
                   <div className="d-flex align-items-center">
-                    <div className="bg-info rounded-circle d-flex align-items-center justify-content-center text-white fw-bold me-3" style={{ width: '40px', height: '40px' }}>
+                    <div className="bg-info rounded-circle d-flex align-items-center justify-content-center text-light fw-bold me-3" style={{ width: '40px', height: '40px' }}>
                       A
                     </div>
                     <div>
@@ -280,7 +280,7 @@ export default function Home() {
       </section>
 
       {/* Reiteration CTA Section */}
-      <section className="py-5 bg-primary text-white">
+      <section className="py-5 bg-dark text-light">
         <div className="container text-center">
           <h2 className="h1 mb-4">Ready to Connect Well-being to Business Success?</h2>
           <p className="lead mb-4">Join thousands of teams using Acrux to achieve their objectives through healthier, more engaged teams.</p>
@@ -292,7 +292,7 @@ export default function Home() {
               Sign In to Dashboard
             </Link>
           </div>
-          <p className="mt-3 text-primary-50">No credit card required • 14-day free trial • Cancel anytime</p>
+          <p className="mt-3 text-light">No credit card required • 14-day free trial • Cancel anytime</p>
         </div>
       </section>
 
@@ -302,45 +302,45 @@ export default function Home() {
           <div className="row g-4">
             <div className="col-lg-3 col-md-6">
               <h5 className="mb-3">Acrux</h5>
-              <p className="text-muted">Connecting team well-being to business success through intelligent pulse checks and blocker management.</p>
+              <p className="text-light">Connecting team well-being to business success through intelligent pulse checks and blocker management.</p>
             </div>
             <div className="col-lg-3 col-md-6">
               <h5 className="mb-3">Product</h5>
               <ul className="list-unstyled">
-                <li><Link href="#features" className="text-muted text-decoration-none">Features</Link></li>
-                <li><Link href="#" className="text-muted text-decoration-none">Pricing</Link></li>
-                <li><Link href="#" className="text-muted text-decoration-none">Security</Link></li>
-                <li><Link href="#" className="text-muted text-decoration-none">Integrations</Link></li>
+                <li><Link href="#features" className="text-light text-decoration-none">Features</Link></li>
+                <li><Link href="#" className="text-light text-decoration-none">Pricing</Link></li>
+                <li><Link href="#" className="text-light text-decoration-none">Security</Link></li>
+                <li><Link href="#" className="text-light text-decoration-none">Integrations</Link></li>
               </ul>
             </div>
             <div className="col-lg-3 col-md-6">
               <h5 className="mb-3">Company</h5>
               <ul className="list-unstyled">
-                <li><Link href="#" className="text-muted text-decoration-none">About</Link></li>
-                <li><Link href="#" className="text-muted text-decoration-none">Blog</Link></li>
-                <li><Link href="#" className="text-muted text-decoration-none">Careers</Link></li>
-                <li><Link href="#" className="text-muted text-decoration-none">Contact</Link></li>
+                <li><Link href="#" className="text-light text-decoration-none">About</Link></li>
+                <li><Link href="#" className="text-light text-decoration-none">Blog</Link></li>
+                <li><Link href="#" className="text-light text-decoration-none">Careers</Link></li>
+                <li><Link href="#" className="text-light text-decoration-none">Contact</Link></li>
               </ul>
             </div>
             <div className="col-lg-3 col-md-6">
               <h5 className="mb-3">Support</h5>
               <ul className="list-unstyled">
-                <li><Link href="#" className="text-muted text-decoration-none">Help Center</Link></li>
-                <li><Link href="#" className="text-muted text-decoration-none">Documentation</Link></li>
-                <li><Link href="#" className="text-muted text-decoration-none">Community</Link></li>
-                <li><Link href="#" className="text-muted text-decoration-none">Status</Link></li>
+                <li><Link href="#" className="text-light text-decoration-none">Help Center</Link></li>
+                <li><Link href="#" className="text-light text-decoration-none">Documentation</Link></li>
+                <li><Link href="#" className="text-light text-decoration-none">Community</Link></li>
+                <li><Link href="#" className="text-light text-decoration-none">Status</Link></li>
               </ul>
             </div>
           </div>
           <hr className="my-4" />
           <div className="row align-items-center">
             <div className="col-md-6">
-              <p className="mb-0 text-muted">&copy; 2025 Acrux. All rights reserved.</p>
+              <p className="mb-0 text-light">&copy; 2025 Acrux. All rights reserved.</p>
             </div>
             <div className="col-md-6 text-md-end">
-              <Link href="#" className="text-muted text-decoration-none me-3">Privacy Policy</Link>
-              <Link href="#" className="text-muted text-decoration-none me-3">Terms of Service</Link>
-              <Link href="#" className="text-muted text-decoration-none">Cookie Policy</Link>
+              <Link href="#" className="text-light text-decoration-none me-3">Privacy Policy</Link>
+              <Link href="#" className="text-light text-decoration-none me-3">Terms of Service</Link>
+              <Link href="#" className="text-light text-decoration-none">Cookie Policy</Link>
             </div>
           </div>
         </div>
