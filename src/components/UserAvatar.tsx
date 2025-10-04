@@ -14,7 +14,7 @@ export default function UserAvatar({
   className = ''
 }: UserAvatarProps) {
   // Generate initials from name or email
-  const getInitials = (name: string | null, email: string) => {
+  const getInitials = (name: string | null, email: string | null) => {
     if (name) {
       return name
         .split(' ')
@@ -23,7 +23,10 @@ export default function UserAvatar({
         .toUpperCase()
         .slice(0, 2)
     }
-    return email.slice(0, 2).toUpperCase()
+    if (email) {
+      return email.slice(0, 2).toUpperCase()
+    }
+    return 'U'
   }
 
   // Generate color based on user ID for consistency
@@ -55,7 +58,7 @@ export default function UserAvatar({
       {...(showTooltip && {
         'data-bs-toggle': 'tooltip',
         'data-bs-placement': 'top',
-        title: user.name || user.email
+        title: user.name || user.email || undefined
       })}
     >
       {initials}

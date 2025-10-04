@@ -15,9 +15,8 @@ async function main() {
     create: {
       email: 'admin@acrux.life',
       name: 'Admin User',
-      hashedPassword,
-      role: 'ADMIN',
-      language: 'en'
+      passwordHash: hashedPassword,
+      role: 'ADMIN'
     }
   })
 
@@ -32,9 +31,8 @@ async function main() {
     create: {
       email: 'member@acrux.life',
       name: 'Team Member',
-      hashedPassword: memberPassword,
-      role: 'MEMBER',
-      language: 'en'
+      passwordHash: memberPassword,
+      role: 'RESEARCHER'
     }
   })
 
@@ -48,12 +46,11 @@ async function main() {
       id: 'sample-objective-1',
       title: 'Improve Team Productivity',
       description: 'Implement new tools and processes to boost team productivity by 25%',
-      priority: 'HIGH',
-      status: 'IN_PROGRESS',
+      status: 'ACTIVE',
       healthScore: 85,
       progress: 60,
       targetDate: new Date('2025-12-31'),
-      createdBy: admin.id
+      userId: admin.id
     }
   })
 
@@ -62,15 +59,16 @@ async function main() {
   // Assign member to objective
   await prisma.objectiveAssignment.upsert({
     where: {
-      objectiveId_userId: {
-        objectiveId: objective.id,
-        userId: member.id
+      userId_objectiveId: {
+        userId: member.id,
+        objectiveId: objective.id
       }
     },
     update: {},
     create: {
       objectiveId: objective.id,
-      userId: member.id
+      userId: member.id,
+      assignedBy: admin.id
     }
   })
 

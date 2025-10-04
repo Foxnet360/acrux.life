@@ -2,7 +2,7 @@ import React from 'react'
 import { render, screen, fireEvent } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import ObjectiveCard from '../ObjectiveCard'
-import { Objective, User } from '@/lib/types'
+import { Objective, User, ObjectiveAssignment } from '@/lib/types'
 
 // Mock UserAvatar component
 jest.mock('../UserAvatar', () => {
@@ -20,6 +20,7 @@ describe('ObjectiveCard', () => {
     id: 'user-1',
     email: 'john@example.com',
     name: 'John Doe',
+    passwordHash: 'hashed',
     firstName: 'John',
     lastName: 'Doe',
     role: 'RESEARCHER',
@@ -32,12 +33,8 @@ describe('ObjectiveCard', () => {
   }
 
   const mockObjective: Objective & {
-    assignments: Array<{
-      id: string
-      userId: string
-      objectiveId: string
-      user: User
-    }>
+    assignments: Array<ObjectiveAssignment & { user: User }>
+    user: User
   } = {
     id: 'obj-1',
     title: 'Test Objective',
@@ -45,16 +42,22 @@ describe('ObjectiveCard', () => {
     progress: 75,
     healthScore: 85,
     status: 'ACTIVE',
+    priority: 'HIGH',
     targetDate: new Date('2025-12-31'),
     ownerId: null,
     userId: 'user-1',
     createdAt: new Date(),
     updatedAt: new Date(),
+    user: mockUser,
     assignments: [
       {
         id: 'assign-1',
+        role: 'member',
+        assignedAt: new Date(),
+        isActive: true,
         userId: 'user-1',
         objectiveId: 'obj-1',
+        assignedBy: 'user-1',
         user: mockUser
       }
     ]
@@ -228,8 +231,12 @@ describe('ObjectiveCard', () => {
         ...mockObjective,
         assignments: Array.from({ length: 5 }, (_, i) => ({
           id: `assign-${i}`,
+          role: 'member',
+          assignedAt: new Date(),
+          isActive: true,
           userId: `user-${i}`,
           objectiveId: 'obj-1',
+          assignedBy: 'user-1',
           user: {
             ...mockUser,
             id: `user-${i}`,

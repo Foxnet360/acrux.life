@@ -6,9 +6,14 @@ const mockUser: User = {
   id: '1',
   email: 'john@example.com',
   name: 'John Doe',
-  hashedPassword: null,
-  role: 'MEMBER',
-  language: 'en',
+  passwordHash: 'hashed',
+  firstName: 'John',
+  lastName: 'Doe',
+  role: 'RESEARCHER',
+  organizationId: null,
+  isActive: true,
+  emailVerified: null,
+  image: null,
   createdAt: new Date(),
   updatedAt: new Date()
 }

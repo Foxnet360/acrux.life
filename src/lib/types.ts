@@ -22,6 +22,7 @@ export type Objective = {
   progress: number
   healthScore: number
   status: Status
+  priority: Priority
   targetDate: Date | null
   ownerId: string | null
   userId: string
@@ -43,7 +44,9 @@ export type PulseRequest = {
   id: string
   title: string
   message: string | null
+  question: string | null
   dueDate: Date | null
+  expiresAt: Date | null
   status: PulseRequestStatus
   adminId: string
   memberId: string
@@ -56,6 +59,7 @@ export type PulseResponse = {
   id: string
   sentiment: number
   confidence: number
+  rating: number | null
   feedback: string | null
   isAnonymous: boolean
   userId: string
@@ -70,6 +74,10 @@ export type Blocker = {
   severity: BlockerSeverity
   status: BlockerStatus
   isAnonymous: boolean
+  userId: string
+  reporterId: string | null
+  assignedTo: string | null
+  resolvedAt: Date | null
   objectiveId: string
   createdAt: Date
   updatedAt: Date
@@ -188,9 +196,9 @@ export type VerificationToken = {
 }
 
 // Enums
-export type UserRole = 'ADMIN' | 'RESEARCHER' | 'ANALYST' | 'VIEWER'
+export type UserRole = 'ADMIN' | 'RESEARCHER' | 'ANALYST' | 'VIEWER' | 'MEMBER'
 export type Priority = 'HIGH' | 'MEDIUM' | 'LOW'
-export type Status = 'ACTIVE' | 'COMPLETED' | 'PAUSED'
+export type Status = 'ACTIVE' | 'COMPLETED' | 'PAUSED' | 'IN_PROGRESS'
 export type BlockerSeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
 export type BlockerStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED'
 export type ProjectRole = 'OWNER' | 'ADMIN' | 'EDITOR' | 'VIEWER'
@@ -248,7 +256,7 @@ export interface ObjectiveSummary {
 export interface ObjectiveCardProps {
   objective: Objective & {
     assignments: (ObjectiveAssignment & { user: User })[]
-    creator: User
+    user: User
   }
   onEdit?: (id: string) => void
   onDelete?: (id: string) => void

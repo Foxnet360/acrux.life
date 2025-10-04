@@ -6,8 +6,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 // Enums
@@ -16,6 +16,7 @@ enum UserRole {
   RESEARCHER
   ANALYST
   VIEWER
+  MEMBER
 }
 
 enum Priority {
@@ -28,6 +29,7 @@ enum Status {
   ACTIVE
   COMPLETED
   PAUSED
+  IN_PROGRESS
 }
 
 enum BlockerSeverity {
@@ -92,6 +94,7 @@ model User {
   pulseResponses     PulseResponse[]
   pulseChecks        PulseCheck[]
   blockers          Blocker[]
+  blockersReported  Blocker[] @relation("BlockerReporter")
   sentPulseRequests  PulseRequest[] @relation("PulseRequestAdmin")
   receivedPulseRequests PulseRequest[] @relation("PulseRequestMember")
   sentInvitations   TeamInvitation[] @relation("TeamInvitationAdmin")
@@ -137,6 +140,7 @@ model Objective {
   progress        Float    @default(0)
   healthScore     Float    @default(75)
   status          Status   @default(ACTIVE)
+  priority        Priority @default(MEDIUM)
   targetDate      DateTime?
   ownerId         String?
   userId          String
@@ -177,7 +181,9 @@ model PulseRequest {
   id          String    @id @default(cuid())
   title       String
   message     String?
+  question    String?
   dueDate     DateTime?
+  expiresAt   DateTime?
   status      PulseRequestStatus @default(PENDING)
   adminId     String
   memberId    String
@@ -198,6 +204,7 @@ model PulseResponse {
   pulseRequestId String
   sentiment     Int         // 1-5 scale (1=😞, 5=😊)
   confidence    Int         // 1-5 scale
+  rating        Int?
   feedback      String?
   isAnonymous   Boolean     @default(true)
   userId        String
@@ -219,11 +226,15 @@ model Blocker {
   status      BlockerStatus   @default(OPEN)
   isAnonymous Boolean         @default(true)
   userId      String
+  reporterId  String?
+  assignedTo  String?
+  resolvedAt  DateTime?
   objectiveId String
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 
   user        User      @relation(fields: [userId], references: [id])
+  reporter    User?     @relation("BlockerReporter", fields: [reporterId], references: [id])
   objective   Objective @relation(fields: [objectiveId], references: [id], onDelete: Cascade)
 
   @@map("blockers")
