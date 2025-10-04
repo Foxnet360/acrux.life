@@ -1,65 +1,43 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { ApiResponse } from '@/lib/types'
+import { createSuccessResponse } from '@/lib/errors'
+import { withAuth } from '@/lib/api-middleware'
+import { cache } from '@/lib/cache'
 
-export async function GET(_request: NextRequest) { // eslint-disable-line @typescript-eslint/no-unused-vars
-  try {
-    console.log('Getting session')
-    const session = await getServerSession(authOptions)
-    console.log('Session:', session)
+async function getMyObjectives(_request: NextRequest, _context: any, user: any) {
+  const cacheKey = `my-objectives:${user.id}`
 
-    if (!session?.user?.id) {
-      console.log('No session user id')
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Unauthorized',
-          data: null
-        } as ApiResponse,
-        { status: 401 }
-      )
-    }
-
-    const objectives = await prisma.objective.findMany({
-      where: {
-        assignments: {
-          some: {
-            userId: session.user.id
-          }
-        }
-      },
-      include: {
-        user: true,
-        assignments: {
-          include: {
-            user: true
-          }
-        }
-      },
-      orderBy: {
-        updatedAt: 'desc'
-      }
-    })
-
-    return NextResponse.json(
-      {
-        success: true,
-        message: 'Objectives retrieved successfully',
-        data: objectives
-      } as ApiResponse,
-      { status: 200 }
-    )
-  } catch (error) {
-    console.error('Get my objectives error:', error)
-    return NextResponse.json(
-      {
-        success: false,
-        message: 'Internal server error',
-        data: null
-      } as ApiResponse,
-      { status: 500 }
-    )
+  // Check cache first
+  const cachedObjectives = cache.get(cacheKey)
+  if (cachedObjectives) {
+    return createSuccessResponse(cachedObjectives, 'Objectives retrieved successfully (cached)')
   }
+
+  const objectives = await prisma.objective.findMany({
+    where: {
+      assignments: {
+        some: {
+          userId: user.id
+        }
+      }
+    },
+    include: {
+      user: true,
+      assignments: {
+        include: {
+          user: true
+        }
+      }
+    },
+    orderBy: {
+      updatedAt: 'desc'
+    }
+  })
+
+  // Cache for 5 minutes
+  cache.set(cacheKey, objectives, 5 * 60 * 1000)
+
+  return createSuccessResponse(objectives, 'Objectives retrieved successfully')
 }
+
+export const GET = withAuth(getMyObjectives)

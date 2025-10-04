@@ -1,254 +1,145 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { ApiResponse } from '@/lib/types'
+import { createSuccessResponse, NotFoundError, AuthorizationError } from '@/lib/errors'
+import { withCustomAuth, withAdmin } from '@/lib/api-middleware'
+import { cache } from '@/lib/cache'
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const session = await getServerSession(authOptions)
+async function getObjective(request: NextRequest, context: { params: { id: string } }, user: any) {
+  const cacheKey = `objective:${context.params.id}`
 
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Unauthorized',
-          data: null
-        } as ApiResponse,
-        { status: 401 }
-      )
-    }
+  // Check cache first
+  const cachedObjective = cache.get(cacheKey)
+  if (cachedObjective) {
+    return createSuccessResponse(cachedObjective, 'Objective retrieved successfully (cached)')
+  }
 
-    const objective = await prisma.objective.findUnique({
-      where: { id: params.id },
-      include: {
-        creator: true,
-        assignments: {
-          include: {
-            user: true
-          }
+  const objective = await prisma.objective.findUnique({
+    where: { id: context.params.id },
+    include: {
+      user: true,
+      assignments: {
+        include: {
+          user: true
         }
       }
-    })
-
-    if (!objective) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Objective not found',
-          data: null
-        } as ApiResponse,
-        { status: 404 }
-      )
     }
+  })
 
-    // Check if user has access (admin or assigned)
-    const isAdmin = session.user.role === 'ADMIN'
-    const isAssigned = objective.assignments.some(a => a.userId === session.user.id)
-    const isCreator = objective.createdBy === session.user.id
-
-    if (!isAdmin && !isAssigned && !isCreator) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Forbidden',
-          data: null
-        } as ApiResponse,
-        { status: 403 }
-      )
-    }
-
-    return NextResponse.json(
-      {
-        success: true,
-        message: 'Objective retrieved successfully',
-        data: objective
-      } as ApiResponse,
-      { status: 200 }
-    )
-  } catch (error) {
-    console.error('Get objective error:', error)
-    return NextResponse.json(
-      {
-        success: false,
-        message: 'Internal server error',
-        data: null
-      } as ApiResponse,
-      { status: 500 }
-    )
+  if (!objective) {
+    throw new NotFoundError('Objective')
   }
+
+  // Cache for 5 minutes
+  cache.set(cacheKey, objective, 5 * 60 * 1000)
+
+  return createSuccessResponse(objective, 'Objective retrieved successfully')
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const session = await getServerSession(authOptions)
+async function checkObjectiveAccess(user: any, request: NextRequest, context: { params: { id: string } }) {
+  const objective = await prisma.objective.findUnique({
+    where: { id: context.params.id },
+    include: { assignments: true }
+  })
 
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Unauthorized',
-          data: null
-        } as ApiResponse,
-        { status: 401 }
-      )
-    }
+  if (!objective) return true // Let the handler throw NotFoundError
 
-    const { title, description, priority, status, progress, targetDate, assignedUsers } = await request.json()
+  const isAdmin = user.role === 'ADMIN'
+  const isAssigned = objective.assignments.some((a: any) => a.userId === user.id)
+  const isCreator = objective.userId === user.id
 
-    // Check if objective exists and user has permission
-    const existingObjective = await prisma.objective.findUnique({
-      where: { id: params.id },
-      include: { assignments: true }
-    })
+  return isAdmin || isAssigned || isCreator
+}
 
-    if (!existingObjective) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Objective not found',
-          data: null
-        } as ApiResponse,
-        { status: 404 }
-      )
-    }
+async function updateObjective(request: NextRequest, context: { params: { id: string } }, user: any) {
+  const { title, description, status, progress, targetDate, assignedUsers } = await request.json()
 
-    const isAdmin = session.user.role === 'ADMIN'
-    const isCreator = existingObjective.createdBy === session.user.id
+  // Check if objective exists and user has permission
+  const existingObjective = await prisma.objective.findUnique({
+    where: { id: context.params.id },
+    include: { assignments: true }
+  })
 
-    if (!isAdmin && !isCreator) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Forbidden',
-          data: null
-        } as ApiResponse,
-        { status: 403 }
-      )
-    }
+  if (!existingObjective) {
+    throw new NotFoundError('Objective')
+  }
 
-    // Update objective
-    const objective = await prisma.objective.update({
-      where: { id: params.id },
-      data: {
-        title,
-        description,
-        priority,
-        status,
-        progress,
-        targetDate: targetDate ? new Date(targetDate) : null,
-        assignments: assignedUsers ? {
-          deleteMany: {},
-          create: assignedUsers.map((userId: string) => ({
-            userId
-          }))
-        } : undefined
-      },
-      include: {
-        creator: true,
-        assignments: {
-          include: {
-            user: true
-          }
+  const isAdmin = user.role === 'ADMIN'
+  const isCreator = existingObjective.userId === user.id
+
+  if (!isAdmin && !isCreator) {
+    throw new AuthorizationError('Only admins or creators can update objectives')
+  }
+
+  // Update objective
+  const objective = await prisma.objective.update({
+    where: { id: context.params.id },
+    data: {
+      title,
+      description,
+      status,
+      progress,
+      targetDate: targetDate ? new Date(targetDate) : null,
+      assignments: assignedUsers ? {
+        deleteMany: {},
+        create: assignedUsers.map((userId: string) => ({
+          userId
+        }))
+      } : undefined
+    },
+    include: {
+      user: true,
+      assignments: {
+        include: {
+          user: true
         }
       }
-    })
+    }
+  })
 
-    return NextResponse.json(
-      {
-        success: true,
-        message: 'Objective updated successfully',
-        data: objective
-      } as ApiResponse,
-      { status: 200 }
-    )
-  } catch (error) {
-    console.error('Update objective error:', error)
-    return NextResponse.json(
-      {
-        success: false,
-        message: 'Internal server error',
-        data: null
-      } as ApiResponse,
-      { status: 500 }
-    )
-  }
+  // Clear related caches
+  cache.delete(`objective:${context.params.id}`)
+  // Also clear general objectives cache to be safe
+  cache.clear()
+
+  return createSuccessResponse(objective, 'Objective updated successfully')
 }
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const session = await getServerSession(authOptions)
+async function checkUpdateAccess(user: any, request: NextRequest, context: { params: { id: string } }) {
+  const objective = await prisma.objective.findUnique({
+    where: { id: context.params.id }
+  })
 
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Unauthorized',
-          data: null
-        } as ApiResponse,
-        { status: 401 }
-      )
-    }
+  if (!objective) return true // Let the handler throw NotFoundError
 
-    // Only admins can delete objectives
-    if (session.user.role !== 'ADMIN') {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Forbidden',
-          data: null
-        } as ApiResponse,
-        { status: 403 }
-      )
-    }
+  const isAdmin = user.role === 'ADMIN'
+  const isCreator = objective.userId === user.id
 
-    // Check if objective exists
-    const existingObjective = await prisma.objective.findUnique({
-      where: { id: params.id }
-    })
-
-    if (!existingObjective) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Objective not found',
-          data: null
-        } as ApiResponse,
-        { status: 404 }
-      )
-    }
-
-    // Delete objective (cascade will handle assignments)
-    await prisma.objective.delete({
-      where: { id: params.id }
-    })
-
-    return NextResponse.json(
-      {
-        success: true,
-        message: 'Objective deleted successfully',
-        data: null
-      } as ApiResponse,
-      { status: 200 }
-    )
-  } catch (error) {
-    console.error('Delete objective error:', error)
-    return NextResponse.json(
-      {
-        success: false,
-        message: 'Internal server error',
-        data: null
-      } as ApiResponse,
-      { status: 500 }
-    )
-  }
+  return isAdmin || isCreator
 }
+
+async function deleteObjective(request: NextRequest, context: { params: Record<string, string> }, user: any) {
+  // Check if objective exists
+  const existingObjective = await prisma.objective.findUnique({
+    where: { id: context.params.id }
+  })
+
+  if (!existingObjective) {
+    throw new NotFoundError('Objective')
+  }
+
+  // Delete objective (cascade will handle assignments)
+  await prisma.objective.delete({
+    where: { id: context.params.id }
+  })
+
+  // Clear related caches
+  cache.delete(`objective:${context.params.id}`)
+  // Also clear general objectives cache
+  cache.clear()
+
+  return createSuccessResponse(null, 'Objective deleted successfully')
+}
+
+export const GET = withCustomAuth(checkObjectiveAccess)(getObjective)
+export const PUT = withCustomAuth(checkUpdateAccess)(updateObjective)
+export const DELETE = withAdmin(deleteObjective)

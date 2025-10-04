@@ -1,169 +1,72 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { ApiResponse } from '@/lib/types'
+import { createSuccessResponse, ValidationError, NotFoundError } from '@/lib/errors'
+import { withAdmin } from '@/lib/api-middleware'
 
-export async function POST(request: NextRequest) { // eslint-disable-line @typescript-eslint/no-unused-vars
-  try {
-    const session = await getServerSession(authOptions)
+async function createPulseRequest(request: NextRequest, context: any, user: any) {
+  const { objectiveId, question, expiresAt } = await request.json()
 
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Unauthorized',
-          data: null
-        } as ApiResponse,
-        { status: 401 }
-      )
-    }
+  // Validation
+  if (!objectiveId) {
+    throw new ValidationError('Objective ID is required')
+  }
 
-    // Only admins can send pulse requests
-    if (session.user.role !== 'ADMIN') {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Forbidden',
-          data: null
-        } as ApiResponse,
-        { status: 403 }
-      )
-    }
+  // Check if objective exists
+  const objective = await prisma.objective.findUnique({
+    where: { id: objectiveId },
+    include: { assignments: true }
+  })
 
-    const { objectiveId, question, expiresAt } = await request.json()
+  if (!objective) {
+    throw new NotFoundError('Objective')
+  }
 
-    // Validation
-    if (!objectiveId) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Objective ID is required',
-          data: null
-        } as ApiResponse,
-        { status: 400 }
-      )
-    }
-
-    // Check if objective exists
-    const objective = await prisma.objective.findUnique({
-      where: { id: objectiveId },
-      include: { assignments: true }
-    })
-
-    if (!objective) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Objective not found',
-          data: null
-        } as ApiResponse,
-        { status: 404 }
-      )
-    }
-
-    // Create pulse request
-    const pulseRequest = await prisma.pulseRequest.create({
-      data: {
-        objectiveId,
-        question: question || 'How are you feeling about this objective?',
-        expiresAt: expiresAt ? new Date(expiresAt) : null
-      },
-      include: {
-        objective: {
-          include: {
-            assignments: {
-              include: {
-                user: true
-              }
+  // Create pulse request
+  const pulseRequest = await prisma.pulseRequest.create({
+    data: {
+      objectiveId,
+      title: 'Pulse Check',
+      message: question || 'How are you feeling about this objective?',
+      dueDate: expiresAt ? new Date(expiresAt) : null,
+      adminId: user.id,
+      memberId: user.id // For now, set to same user
+    },
+    include: {
+      objective: {
+        include: {
+          assignments: {
+            include: {
+              user: true
             }
           }
         }
       }
-    })
+    }
+  })
 
-    // TODO: Send notifications to assigned users
-    // For now, just return the pulse request
+  // TODO: Send notifications to assigned users
+  // For now, just return the pulse request
 
-    return NextResponse.json(
-      {
-        success: true,
-        message: 'Pulse request sent successfully',
-        data: pulseRequest
-      } as ApiResponse,
-      { status: 201 }
-    )
-  } catch (error) {
-    console.error('Send pulse request error:', error)
-    return NextResponse.json(
-      {
-        success: false,
-        message: 'Internal server error',
-        data: null
-      } as ApiResponse,
-      { status: 500 }
-    )
-  }
+  return createSuccessResponse(pulseRequest, 'Pulse request sent successfully', 201)
 }
 
-export async function GET(_request: NextRequest) { // eslint-disable-line @typescript-eslint/no-unused-vars
-  try {
-    const session = await getServerSession(authOptions)
-
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Unauthorized',
-          data: null
-        } as ApiResponse,
-        { status: 401 }
-      )
-    }
-
-    // Only admins can view all pulse requests
-    if (session.user.role !== 'ADMIN') {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Forbidden',
-          data: null
-        } as ApiResponse,
-        { status: 403 }
-      )
-    }
-
-    const pulseRequests = await prisma.pulseRequest.findMany({
-      include: {
-        objective: true,
-        responses: {
-          include: {
-            user: true
-          }
+async function getPulseRequests(_request: NextRequest, _context: any, _user: any) {
+  const pulseRequests = await prisma.pulseRequest.findMany({
+    include: {
+      objective: true,
+      responses: {
+        include: {
+          user: true
         }
-      },
-      orderBy: {
-        createdAt: 'desc'
       }
-    })
+    },
+    orderBy: {
+      createdAt: 'desc'
+    }
+  })
 
-    return NextResponse.json(
-      {
-        success: true,
-        message: 'Pulse requests retrieved successfully',
-        data: pulseRequests
-      } as ApiResponse,
-      { status: 200 }
-    )
-  } catch (error) {
-    console.error('Get pulse requests error:', error)
-    return NextResponse.json(
-      {
-        success: false,
-        message: 'Internal server error',
-        data: null
-      } as ApiResponse,
-      { status: 500 }
-    )
-  }
+  return createSuccessResponse(pulseRequests, 'Pulse requests retrieved successfully')
 }
+
+export const POST = withAdmin(createPulseRequest)
+export const GET = withAdmin(getPulseRequests)

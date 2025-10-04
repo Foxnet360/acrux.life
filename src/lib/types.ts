@@ -268,6 +268,35 @@ export interface UserAvatarProps {
   user: User
   size?: 'small' | 'medium' | 'large'
   showTooltip?: boolean
+  className?: string
+}
+
+// Sub-component Props Types
+export interface StatusBadgeProps {
+  status: string
+}
+
+export interface HealthScoreProps {
+  score: number
+}
+
+export interface ProgressBarProps {
+  progress: number
+}
+
+export interface DueDateProps {
+  targetDate: Date | null
+}
+
+export interface AssignedUsersProps {
+  assignments: (ObjectiveAssignment & { user: User })[]
+}
+
+export interface ActionButtonsProps {
+  objectiveId: string
+  onEdit?: (id: string) => void
+  onDelete?: (id: string) => void
+  onSendPulse?: (id: string) => void
 }
 
 // Multilingual Types

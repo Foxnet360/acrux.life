@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { User } from '@/lib/types'
 
 interface UserAvatarProps {
@@ -7,7 +8,7 @@ interface UserAvatarProps {
   className?: string
 }
 
-export default function UserAvatar({
+const UserAvatar = memo(function UserAvatar({
   user,
   size = 'medium',
   showTooltip = false,
@@ -71,4 +72,6 @@ export default function UserAvatar({
   }
 
   return avatar
-}
+})
+
+export default UserAvatar

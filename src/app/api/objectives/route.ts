@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { requireAdmin } from '@/lib/auth-utils'
 import { handleApiError, createSuccessResponse } from '@/lib/errors'
 import { createObjectiveSchema, objectiveQuerySchema } from '@/lib/validations/objective'
+import { cache } from '@/lib/cache'
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,6 +14,15 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const queryParams = Object.fromEntries(searchParams.entries())
     const query = objectiveQuerySchema.parse(queryParams)
+
+    // Create cache key based on query parameters
+    const cacheKey = `objectives:${JSON.stringify(query)}`
+
+    // Check cache first
+    const cachedResult = cache.get(cacheKey)
+    if (cachedResult) {
+      return createSuccessResponse(cachedResult, 'Objectives retrieved successfully (cached)')
+    }
 
     // Build where clause
     const where: any = {}
@@ -84,7 +94,7 @@ export async function GET(request: NextRequest) {
     // Calculate pagination metadata
     const totalPages = Math.ceil(totalCount / query.pageSize)
 
-    return createSuccessResponse({
+    const result = {
       objectives,
       pagination: {
         page: query.page,
@@ -92,7 +102,12 @@ export async function GET(request: NextRequest) {
         total: totalCount,
         totalPages
       }
-    }, 'Objectives retrieved successfully')
+    }
+
+    // Cache the result for 5 minutes
+    cache.set(cacheKey, result, 5 * 60 * 1000)
+
+    return createSuccessResponse(result, 'Objectives retrieved successfully')
   } catch (error) {
     return handleApiError(error)
   }
@@ -151,6 +166,9 @@ export async function POST(request: NextRequest) {
 
       return createdObjective
     })
+
+    // Clear objectives cache on creation
+    cache.clear()
 
     return createSuccessResponse(objective, 'Objective created successfully', 201)
   } catch (error) {

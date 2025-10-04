@@ -2,16 +2,17 @@ import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
 import { ApiResponse } from '@/lib/types'
+import { logger } from '@/lib/logger'
 
 export async function POST(request: NextRequest) {
-  console.log('Signup API called')
+  logger.debug('Signup API called')
   try {
     const { email, password, name } = await request.json()
-    console.log('Received data:', { email, name, passwordLength: password?.length })
+    logger.debug('Received data', { email, name, passwordLength: password?.length })
 
     // Validation
     if (!email || !password) {
-      console.log('Validation failed: missing email or password')
+      logger.debug('Validation failed: missing email or password')
       return NextResponse.json(
         {
           success: false,
@@ -23,7 +24,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (password.length < 8) {
-      console.log('Validation failed: password too short')
+      logger.debug('Validation failed: password too short')
       return NextResponse.json(
         {
           success: false,
@@ -34,14 +35,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('Checking if user exists')
+    logger.debug('Checking if user exists')
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
       where: { email }
     })
 
     if (existingUser) {
-      console.log('User already exists')
+      logger.debug('User already exists')
       return NextResponse.json(
         {
           success: false,
@@ -52,11 +53,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('Hashing password')
+    logger.debug('Hashing password')
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12)
 
-    console.log('Creating user')
+    logger.debug('Creating user')
     // Create user
     const user = await prisma.user.create({
       data: {
@@ -67,12 +68,12 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    console.log('User created:', user.id)
+    logger.debug('User created', { userId: user.id })
     // Return user without password
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { passwordHash: _, ...userWithoutPassword } = user
 
-    console.log('Returning success')
+    logger.debug('Returning success')
     return NextResponse.json(
       {
         success: true,
@@ -82,7 +83,7 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     )
   } catch (error) {
-    console.error('Signup error:', error)
+    logger.error('Signup error', error)
     return NextResponse.json(
       {
         success: false,

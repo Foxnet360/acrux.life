@@ -3,6 +3,7 @@ import { PrismaAdapter } from '@next-auth/prisma-adapter'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import bcrypt from 'bcryptjs'
 import { prisma } from './prisma'
+import { logger } from './logger'
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -13,38 +14,38 @@ export const authOptions: NextAuthOptions = {
         password: { label: 'Password', type: 'password' }
       },
       async authorize(credentials) {
-        console.log('Authorize called with:', credentials?.email)
+        logger.debug('Authorize called', { email: credentials?.email })
         if (!credentials?.email || !credentials?.password) {
-          console.log('No credentials')
+          logger.debug('No credentials')
           return null
         }
 
-        console.log('Finding user')
+        logger.debug('Finding user')
         const user = await prisma.user.findUnique({
           where: {
             email: credentials.email
           }
         })
 
-        console.log('User found:', !!user)
+        logger.debug('User found', { found: !!user })
         if (!user || !user.passwordHash) {
-          console.log('No user or no passwordHash')
+          logger.debug('No user or no passwordHash')
           return null
         }
 
-        console.log('Comparing password')
+        logger.debug('Comparing password')
         const isPasswordValid = await bcrypt.compare(
           credentials.password,
           user.passwordHash
         )
 
-        console.log('Password valid:', isPasswordValid)
+        logger.debug('Password valid', { valid: isPasswordValid })
         if (!isPasswordValid) {
-          console.log('Invalid password')
+          logger.debug('Invalid password')
           return null
         }
 
-        console.log('Returning user')
+        logger.debug('Returning user', { userId: user.id })
         return {
           id: user.id,
           email: user.email,

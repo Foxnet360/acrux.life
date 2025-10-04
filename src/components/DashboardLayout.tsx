@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import Navbar from './Navbar'
+import ErrorBoundary from './ErrorBoundary'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -55,7 +56,9 @@ export default function DashboardLayout({
     <div className="min-vh-100 bg-light">
       <Navbar />
       <main className="container-fluid py-4">
-        {children}
+        <ErrorBoundary>
+          {children}
+        </ErrorBoundary>
       </main>
     </div>
   )

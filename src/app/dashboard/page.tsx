@@ -1,11 +1,12 @@
 'use client'
 
 import { useSession } from 'next-auth/react'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import DashboardLayout from '@/components/DashboardLayout'
 import ObjectiveCard from '@/components/ObjectiveCard'
 import { Objective, User, ObjectiveAssignment, HealthMetrics } from '@/lib/types'
+import { logger } from '@/lib/logger'
 
 type ObjectiveWithDetails = Objective & {
   assignments: (ObjectiveAssignment & { user: User })[]
@@ -51,20 +52,20 @@ export default function Dashboard() {
     }
   }
 
-  const handleEdit = (id: string) => {
+  const handleEdit = useCallback((id: string) => {
     // TODO: Implement edit functionality
-    console.log('Edit objective:', id)
-  }
+    logger.debug('Edit objective', { id })
+  }, [])
 
-  const handleDelete = (id: string) => {
+  const handleDelete = useCallback((id: string) => {
     // TODO: Implement delete functionality
-    console.log('Delete objective:', id)
-  }
+    logger.debug('Delete objective', { id })
+  }, [])
 
-  const handleSendPulse = (id: string) => {
+  const handleSendPulse = useCallback((id: string) => {
     // TODO: Implement send pulse functionality
-    console.log('Send pulse for objective:', id)
-  }
+    logger.debug('Send pulse for objective', { id })
+  }, [])
 
   if (loading) {
     return (

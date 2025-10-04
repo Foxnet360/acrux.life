@@ -1,71 +1,40 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { ApiResponse } from '@/lib/types'
+import { createSuccessResponse } from '@/lib/errors'
+import { withAuth } from '@/lib/api-middleware'
 
-export async function GET(_request: NextRequest) { // eslint-disable-line @typescript-eslint/no-unused-vars
-  try {
-    const session = await getServerSession(authOptions)
-
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Unauthorized',
-          data: null
-        } as ApiResponse,
-        { status: 401 }
-      )
-    }
-
-    // Get pending pulse requests for the user
-    const pendingRequests = await prisma.pulseRequest.findMany({
-      where: {
-        objective: {
-          assignments: {
-            some: {
-              userId: session.user.id
-            }
-          }
-        },
-        // Not expired
-        OR: [
-          { expiresAt: null },
-          { expiresAt: { gt: new Date() } }
-        ],
-        // User hasn't responded yet
-        responses: {
-          none: {
-            userId: session.user.id
+async function getPendingPulseRequests(_request: NextRequest, _context: any, user: any) {
+  // Get pending pulse requests for the user
+  const pendingRequests = await prisma.pulseRequest.findMany({
+    where: {
+      objective: {
+        assignments: {
+          some: {
+            userId: user.id
           }
         }
       },
-      include: {
-        objective: true
-      },
-      orderBy: {
-        createdAt: 'desc'
+      // Not expired
+      OR: [
+        { dueDate: null },
+        { dueDate: { gt: new Date() } }
+      ],
+      // User hasn't responded yet
+      responses: {
+        none: {
+          userId: user.id
+        }
       }
-    })
+    },
+    include: {
+      objective: true
+    },
+    orderBy: {
+      createdAt: 'desc'
+    }
+  })
 
-    return NextResponse.json(
-      {
-        success: true,
-        message: 'Pending pulse requests retrieved successfully',
-        data: pendingRequests
-      } as ApiResponse,
-      { status: 200 }
-    )
-  } catch (error) {
-    console.error('Get pending pulse requests error:', error)
-    return NextResponse.json(
-      {
-        success: false,
-        message: 'Internal server error',
-        data: null
-      } as ApiResponse,
-      { status: 500 }
-    )
-  }
+  return createSuccessResponse(pendingRequests, 'Pending pulse requests retrieved successfully')
 }
+
+export const GET = withAuth(getPendingPulseRequests)
