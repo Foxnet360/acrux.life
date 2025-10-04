@@ -28,6 +28,23 @@
     --border-color: #495057;
     --shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.25);
   }
+
+  /* Override Bootstrap text classes for better dark mode contrast */
+  .text-muted {
+    color: var(--text-secondary) !important;
+  }
+
+  .text-secondary {
+    color: var(--text-secondary) !important;
+  }
+
+  .text-body-secondary {
+    color: var(--text-secondary) !important;
+  }
+
+  .card-body {
+    color: var(--text-primary);
+  }
 }
 
 body {

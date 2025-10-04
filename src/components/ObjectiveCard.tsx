@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { ObjectiveCardProps } from '@/lib/types'
 import UserAvatar from './UserAvatar'
 
@@ -162,6 +162,18 @@ export default function ObjectiveCard({
   onSendPulse,
   className = ''
 }: ObjectiveCardProps) {
+
+  useEffect(() => {
+    const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+    console.log('ObjectiveCard: Dark mode active?', isDarkMode)
+    // Log computed styles for debugging
+    const cardBody = document.querySelector('.card-body')
+    if (cardBody) {
+      const computedStyle = window.getComputedStyle(cardBody)
+      console.log('Card body background:', computedStyle.backgroundColor)
+      console.log('Card body color:', computedStyle.color)
+    }
+  }, [])
 
   return (
     <div className={`card h-100 ${className}`} role="article" aria-labelledby={`objective-${objective.id}`}>
